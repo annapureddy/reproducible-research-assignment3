@@ -1,0 +1,58 @@
+---
+title: "Analysis of Severe Weather Events"
+author: "Sid Reddy"
+date: "November 21, 2014"
+output: html_document
+---
+
+## Synposis
+
+In this report, we analyze data from the National Oceanic and Atmospheric Administration's (NOAA) Storm Database, to address the following two questions. We would like to find the types of events that are most harmful to population health, as well as those that cause the most economic damage. Our analysis of the data shows that "Heat Wave", "Tropical Storm Gordon", and "Wild Fires" are the top 3 types of events that are most harmful to population health. Similarly, "Tropical Storm Gordon", "Coastal Erosion", "Heavy rain and flood/River and stream flood" are the top 3 types of events that have the most severe economic consequences.
+
+## Data Processing
+We will start by reading the data into a data frame. 
+```{r cache=TRUE}
+df <- read.csv(bzfile("repdata_data_StormData.csv.bz2"))
+```
+
+We will address two questions with our data analysis. The first is the type of events that are most harmful to population health. The second is the type of events that have the greatest economic consequences. 
+
+For the first question, we need a definition of population health. There are two indicators of health in our data: fatalities and injuries. We will make two assumptions:
+
+ * Both fatalities and injuries are equal indicators of health, i.e., they each take a weight of 0.5 towards a health metric. 
+ * The mean, of the sum of fatalities and injuries, is the health metric of choice.
+There are other choices of assumptions we could have made (like using the median, instead of the mean). But we will go ahead with our assumptions as a reasonable choice for this analysis. 
+
+```{r cache=TRUE}
+library(dplyr)
+df1 <- df %>% group_by(EVTYPE) %>% summarize(avg_health_indicator = mean(FATALITIES, na.rm = TRUE) + mean(INJURIES, na.rm = TRUE)) %>% arrange(desc(avg_health_indicator))
+threshold <- 20
+df2 <- df1[df1[, 'avg_health_indicator'] > threshold, 'EVTYPE']
+df3 <- df1[df1[, 'avg_health_indicator'] > threshold, 'avg_health_indicator']
+plot(df2, df3, main = sprintf('Event types with average fatalities + injuries > %d', threshold), xlab = 'Event Type', ylab = 'Average fatalities + injuries', xaxt = 'n')
+points(df2, df3, pch = 8, cex = 2, col = 'blue')
+text(df2, df3, df2, col = 'red')
+```
+
+From the analysis above, we notice that "Heat Wave", "Tropical Storm Gordon", and "Wild Fires" are the top 3 types of events that are most harmful to population health. 
+
+For the second question, we have two indicators of economic consequences in our data: property damage (PROPDMG) and crop damage (CROPDMG). Again, like above, we will assume that property damage and crop damage are considered with equal weight towards economic consequences, and we will use the mean as the metric of choice. 
+
+```{r cache=TRUE}
+df1 <- df %>% group_by(EVTYPE) %>% summarize(avg_economic_indicator = mean(PROPDMG + CROPDMG, na.rm = TRUE)) %>% arrange(desc(avg_economic_indicator))
+threshold <- 500
+df2 <- df1[df1[, 'avg_economic_indicator'] > threshold, 'EVTYPE']
+df3 <- df1[df1[, 'avg_economic_indicator'] > threshold, 'avg_economic_indicator']
+plot(df2, df3, main = sprintf('Event types with average property + crop damage > %d', threshold), xlab = 'Event Type', ylab = 'Average property + crop damage', xaxt = 'n')
+points(df2, df3, pch = 8, cex = 2, col = 'blue')
+text(df2, df3, df2, cex = 0.5, col = 'red')
+```
+
+From the analysis above, we note that "Tropical Storm Gordon", "Coastal Erosion", "Heavy rain and flood/river and stream flood" are the top 3 types of events that have the most severe economic consequences. 
+
+## Results
+
+The results of our analysis show that:
+
+ * "Heat Wave", "Tropical Storm Gordon", and "Wild Fires" are the top 3 types of events that are most harmful to population health. 
+ * "Tropical Storm Gordon", "Coastal Erosion", "Heavy rain and flood/river and stream flood" are the top 3 types of events that have the most severe economic consequences.
